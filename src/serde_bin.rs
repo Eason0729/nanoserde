@@ -93,7 +93,7 @@ macro_rules! impl_ser_de_bin_for {
     ($ty:ident) => {
         impl SerBin for $ty {
             fn ser_bin(&self, s: &mut Vec<u8>) {
-                let du8 = self.to_ne_bytes();
+                let du8 = self.to_be_bytes();
                 s.extend_from_slice(&du8);
             }
         }
@@ -109,7 +109,7 @@ macro_rules! impl_ser_de_bin_for {
                     });
                 }
                 let mut m = [0 as $ty];
-                m[0] = <$ty>::from_ne_bytes(d[*o..(*o + l)].try_into().unwrap());
+                m[0] = <$ty>::from_be_bytes(d[*o..(*o + l)].try_into().unwrap());
                 *o += l;
                 Ok(m[0])
             }
@@ -131,7 +131,7 @@ impl_ser_de_bin_for!(i16);
 impl SerBin for usize {
     fn ser_bin(&self, s: &mut Vec<u8>) {
         let u64usize = *self as u64;
-        let du8 = u64usize.to_ne_bytes();
+        let du8 = u64usize.to_be_bytes();
         s.extend_from_slice(&du8);
     }
 }
@@ -141,7 +141,7 @@ impl DeBin for usize {
         let l = core::mem::size_of::<u64>();
 
         let m = match d.get(*o..*o + l) {
-            Some(data) => u64::from_ne_bytes(data.try_into().unwrap()),
+            Some(data) => u64::from_be_bytes(data.try_into().unwrap()),
             None => {
                 return Err(DeBinErr {
                     o: *o,
