@@ -10,7 +10,7 @@ use alloc::vec::Vec;
 use hashbrown::{HashMap, HashSet};
 
 #[cfg(not(features = "no_std"))]
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, BTreeMap};
 
 /// A trait for objects that can be serialized to binary.
 pub trait SerBin {
@@ -333,6 +333,40 @@ where
             out.insert(DeBin::de_bin(o, d)?);
         }
         Ok(out)
+    }
+}
+
+#[cfg(not(features = "no_std"))]
+impl<K,V> SerBin for BTreeMap<K,V>
+where
+    K: SerBin,
+    V: SerBin,
+{
+    fn ser_bin(&self, s: &mut Vec<u8>) {
+        let len = self.len();
+        len.ser_bin(s);
+        for (k, v) in self {
+            k.ser_bin(s);
+            v.ser_bin(s);
+        }
+    }
+}
+
+#[cfg(not(features = "no_std"))]
+impl<K,V> DeBin for BTreeMap<K,V>
+where
+    K: DeBin + Ord,
+    V: DeBin,
+{
+    fn de_bin(o: &mut usize, d: &[u8]) -> Result<Self, DeBinErr> {
+        let len: usize = DeBin::de_bin(o, d)?;
+        let mut h = BTreeMap::new();
+        for _ in 0..len {
+            let k = DeBin::de_bin(o, d)?;
+            let v = DeBin::de_bin(o, d)?;
+            h.insert(k, v);
+        }
+        Ok(h)
     }
 }
 
